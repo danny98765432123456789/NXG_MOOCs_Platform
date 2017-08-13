@@ -3,8 +3,8 @@ var randgen = require("randgen");
 
 var alpha = 205;
 var p = 4;
-var std = 4;
-var tx_speed = 3000;
+var std = 1.5;
+var tx_speed = 400;
 
 var anchors = [new Anchor(3, [0, 10]),
   new Anchor(2, [5, 0]),
@@ -12,8 +12,13 @@ var anchors = [new Anchor(3, [0, 10]),
 ];
 
 var devices = [new Device(1, [3, 7]),
-  new Device(4, [7, 4])
+  new Device(4, [7, 4]),
+  new Device(6, [5, 1])
 ];
+
+setInterval(function() {
+  move(devices[2]);
+}, 3000)
 
 function Device(mac, loc) {
   this.mac = mac;
@@ -46,17 +51,40 @@ Anchor.prototype.genPacket = function(device) {
 function receive(sp, anchor, devices) {
   var rand = Math.round(Math.random() * tx_speed);
   setTimeout(function() {
-    var receivedPacket = Math.random() > 0.5 ? anchor.genPacket(devices[0]) :
-      anchor.genPacket(devices[1]);
+    var receivedPacket;
+    var temp = Math.random();
+    if (temp <= 0.33333333)
+      receivedPacket = anchor.genPacket(devices[0])
+    if (temp > 0.33333333 && temp <= 0.66666666)
+      receivedPacket = anchor.genPacket(devices[1])
+    if (temp > 0.66666666)
+      receivedPacket = anchor.genPacket(devices[2])
     sp.write(receivedPacket);
     receive(sp, anchor, devices);
-  }, rand);
+  }, tx_speed);
 }
 
+// For the dynamic device
 function move(device) {
-  if(device.loc[0]<5 && device.loc[1]>=5) {
-    // blablalbablabla
+
+  if (device.loc[0] <= 5 && device.loc[1] < 5) { //left down
+    device.loc[0]-=0.25;
+    device.loc[1]+=0.25;
   }
+  else if (device.loc[0] < 5 && device.loc[1] >= 5) { //left up
+    device.loc[0]+=0.25;
+    device.loc[1]+=0.25;
+  }
+  else if (device.loc[0] >= 5 && device.loc[1] > 5) { //right up
+    device.loc[0]+=0.25;
+    device.loc[1]-=0.25;
+  }
+  else if (device.loc[0] > 5 && device.loc[1] <= 5) { //right down
+    device.loc[0]-=0.25;
+    device.loc[1]-=0.25;
+  }
+  return device;
+
 }
 
 module.exports = {
